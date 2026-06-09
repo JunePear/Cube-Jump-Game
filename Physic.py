@@ -57,112 +57,140 @@ def main():
 
     JumpC = False
     canFall = True
+    
+    canJump = True
+    is_grounded = False
+
+    platforms = [
+        pygame.Rect(0, 720, 1000, 100),
+        pygame.Rect(0, 140, 1000, 20),
+        pygame.Rect(350, 550, 300, 20),  
+        pygame.Rect(150, 400, 250, 20),   
+        pygame.Rect(600, 400, 250, 20)     
+    ]
 
     while run:
-        clock.tick(80)
+        clock.tick(60)
         
-
+       
+        keys = pygame.key.get_pressed()
 
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
                 run = False
 
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_q]:
-                run = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    run = False
 
-        WINDOW.fill(Blue)
+           
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                start_can = pygame.math.Vector2(xA + 10, yA + 10) 
+                mouse = pygame.mouse.get_pos()
+                distance = mouse - start_can
+                if distance.length() > 0:
+                   
+                    bullet_dir = distance.normalize()
+                    
+                   
+                    XForce -= bullet_dir.x * 10.0
+                    downVel -= bullet_dir.y * 12.0
+                    is_grounded = False 
+                    
+                    position = pygame.math.Vector2(start_can) # duplicate # start position in start of canon
+                    #position = pygame.math.Vector2(end)   # duplicate # start position in end of canon
+                    speed = bullet_dir * SPEED
+                    all_bullets.append([position, speed])
+                    
+                    mouse = pygame.mouse.get_pos()
+                    distance = mouse - start_can
+                    position = pygame.math.Vector2(start_can) # duplicate # start position in start of canon
+                    #position = pygame.math.Vector2(end)   # duplicate # start position in end of canon
+                    speed = bullet_dir * SPEED
+                    all_bullets.append([position, speed])
 
-        Cube_A = pygame.draw.rect(WINDOW, (Yellow), (xA, yA, 20, 20))
-        Cube_B = pygame.draw.rect(WINDOW, (White), (xB, yB, 20, 20))
-        Platform = pygame.draw.rect(WINDOW, (Black), (0, 720, 1000, 100))
-        Jump_Fuel = pygame.draw.rect(WINDOW, (Yellow), (50, 190, 60, (9*(25-x))))
-        pygame.display.flip()
+
+      
+        if keys[pygame.K_a]:
+            XForce = XForce - 0.9  
+        if keys[pygame.K_d]:
+            XForce = XForce + 0.9  
+        
+        if is_grounded:
+            XForce = XForce * 0.82
+        else:
+            XForce = XForce * 0.95
+
+        xA = xA + XForce
 
         
-
-        if canFall == True:
-            yA += downVel
-            downVel = downVel + 0.2
-            
-        if yA >= 700:
-            canFall = False
-            canJump = True
-
-        if yA >= 700:
-            yA = 700
-            x = 0
-            
-            #candouble_check = True
-
-        if yA < 700:
-            canFall = True
-
         if xA < 0:
             xA = 0
+            XForce = -XForce * 0.75  
 
         if xA > 980:
             xA = 980
-            
+            XForce = -XForce * 0.75  
         
-        if xA == 0:
-            XForce = XForce * -0.2
-        
-        if xA == 980:
-            XForce = XForce * -0.2
-            
-            
-        if JumpC == True:
-            downVel = upVel * -0.5
 
-
-        JumpC = False
-        
+       
+        if not is_grounded:
+            downVel += 0.6  
+            yA += downVel
+            
+     
         if keys[pygame.K_w]:
-            
-            if canJump ==  True:
-                canFall = False
-                yA -= upVel
-                upVel = upVel - 0.2
-
-                x = x + 1
+            if canJump == True:
+                is_grounded = False
+                yA -= 6         
+                downVel = -4.5  
+                
+                x = x + 1.5     
                 JumpC = True
 
-                if x == 25:
+                if x >= 15:     
                     canJump = False
-                    canFall = True
                     upVel = 10
                     #downVel = upVel * -0.2
                     #if candouble_check == True:
                         #candouble = True
-            
-        
-            #if candouble == True:
-                #canJump = True
-                #candouble = False
-                #candouble_check = False
+        else:
+            if not is_grounded:
+                canJump = False
 
-        xA = xA + XForce
+     
+        player_rect = pygame.Rect(xA, yA, 20, 20)
+        is_grounded = False  
 
-        if keys[pygame.K_a] and yA >= 700:
-            XForce = XForce - 0.2
-            
+        for plat in platforms:
+            if player_rect.colliderect(plat):
+                if downVel >= 0 and player_rect.bottom - downVel <= plat.top + 10:
+                    yA = plat.top - 20
+                    downVel = 0
+                    is_grounded = True
+                    canJump = True
+                    x = 0
+                    #candouble_check = True
+                elif downVel < 0 and player_rect.top - downVel >= plat.bottom - 10:
+                    yA = plat.bottom
+                    downVel = 0.5
+                elif XForce > 0:
+                    xA = plat.left - 20
+                    XForce = -XForce * 0.5
+                elif XForce < 0:
+                    xA = plat.right
+                    XForce = -XForce * 0.5
 
-        if keys[pygame.K_d] and yA >= 700:
-            XForce = XForce + 0.2
-        
-        if XForce > 0 and yA >= 700:
-            XForce = XForce - 0.1
-        
-        if XForce < 0 and yA >= 700:
-            XForce = XForce + 0.1
+        if yA < 700 and is_grounded == False:
+            pass 
 
-        Cube_A = pygame.draw.rect(WINDOW, (Yellow), (xA, yA, 20, 20))
-        Cube_B = pygame.draw.rect(WINDOW, (White), (xB, yB, 20, 20))
-        pygame.display.flip()
+        if JumpC == True:
+            pass
 
-        
+        JumpC = False
+
+
         #if keys[pygame.K_a]:
             #if canJump == True:
                 #xA -= XForce
@@ -174,31 +202,26 @@ def main():
         #if keys[pygame.K_d]:
             #X
 
-        start_can = pygame.math.Vector2(Cube_A.center)
-        end = start_can
+
+        #render pipleline
+        WINDOW.fill(Blue)
         
-        if event.type == pygame.MOUSEMOTION:
-            mouse = pygame.mouse.get_pos()
-            end = start_can + (mouse - start_can).normalize() * length
-        
-        pygame.MOUSEBUTTONDOWN  
-        if event.type == pygame.MOUSEBUTTONDOWN:
-                
-            mouse = pygame.mouse.get_pos()
-            distance = mouse - start_can
-            position = pygame.math.Vector2(Cube_A.center) # duplicate # start position in start of canon
-            #position = pygame.math.Vector2(end)   # duplicate # start position in end of canon
-            speed = distance.normalize() * SPEED
-            all_bullets.append([position, speed])
-                    
+        for plat in platforms:
+            pygame.draw.rect(WINDOW, Black, plat)
             
 
-            mouse = pygame.mouse.get_pos()
-            distance = mouse - start_can
-            position = pygame.math.Vector2(Cube_A.center) # duplicate # start position in start of canon
-            #position = pygame.math.Vector2(end)   # duplicate # start position in end of canon
-            speed = distance.normalize() * SPEED
-            all_bullets.append([position, speed])
+        Cube_A = pygame.draw.rect(WINDOW, (Yellow), (xA, yA, 20, 20))
+        Cube_B = pygame.draw.rect(WINDOW, (White), (xB, yB, 20, 20))
+
+        start_can = pygame.math.Vector2(Cube_A.center)
+        mouse = pygame.mouse.get_pos()
+        dir_vector = mouse - start_can
+        if dir_vector.length() > 0:
+            end = start_can + dir_vector.normalize() * length
+        else:
+            end = start_can
+        
+        pygame.MOUSEBUTTONDOWN  
 
         for position, speed in all_bullets:
             position += speed
@@ -213,13 +236,7 @@ def main():
                 pygame.draw.rect(WINDOW, (255, 255, 255), (pos_x, pos_y, 5, 5))
             line_Bullet()
 
-        
-            
-            
-
         pygame.display.flip()
-
-
         pygame.display.update()
         
     pygame.quit()
