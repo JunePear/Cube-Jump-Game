@@ -94,8 +94,8 @@ def main():
                     bullet_dir = distance.normalize()
                     
                    
-                    XForce -= bullet_dir.x * 10.0
-                    downVel -= bullet_dir.y * 12.0
+                    XForce -= bullet_dir.x * 6.0
+                    downVel -= bullet_dir.y * 7.0
                     is_grounded = False 
                     
                     position = pygame.math.Vector2(start_can) # duplicate # start position in start of canon
@@ -112,26 +112,37 @@ def main():
 
 
       
+
         if keys[pygame.K_a]:
-            XForce = XForce - 0.9  
+            if is_grounded:
+                XForce = XForce - 0.9  
+            else:
+                XForce = XForce - 0.3
         if keys[pygame.K_d]:
-            XForce = XForce + 0.9  
+            if is_grounded:
+                XForce = XForce + 0.9  
+            else:
+                XForce = XForce + 0.3
         
         if is_grounded:
             XForce = XForce * 0.82
         else:
             XForce = XForce * 0.95
 
+        if not is_grounded:
+            if XForce > 12: XForce = 12
+            if XForce < -12: XForce = -12
+
         xA = xA + XForce
 
         
         if xA < 0:
             xA = 0
-            XForce = -XForce * 0.75  
+            XForce = -XForce * 0.75
 
         if xA > 980:
             xA = 980
-            XForce = -XForce * 0.75  
+            XForce = -XForce * 0.75
         
 
        
